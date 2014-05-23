@@ -5,10 +5,9 @@
   "main": "index.html",
   "window": {
     "title": "CutMaker",
-    "toolbar": true,
-    "frame": true,
+    "toolbar": false,
+    "frame": false,
     "position": "center",
-    "fullscreen": false,
     "width": 1280,
     "height": 800,
     "resizable": true

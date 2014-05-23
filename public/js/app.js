@@ -1,5 +1,5 @@
 var body, player, file, tmdb, movie, conf, records, curRecord, tempRecord, timer, cutTimeout, currIndex;
-
+var gui = require('nw.gui').Window.get();
 function tmdbImg(type, size, path){
 	return tmdb.images.base_url + tmdb.images[type+"_sizes"][size] + path;
 }
@@ -14,6 +14,18 @@ function startTimer(){
 			clearInterval(timer);
 		} 
 	}, 1000);
+}
+
+function enterFullScreen(){
+	$('#window-bar').fadeOut(200);
+	$('#main').css('paddingTop', 0);
+	gui.enterFullscreen();
+}
+
+function leaveFullScreen(){
+	$('#window-bar').fadeIn(200);
+	$('#main').css('paddingTop', 40);
+	gui.leaveFullscreen();
 }
 
 function stopTimer(){
@@ -83,6 +95,8 @@ function drawRecords(){
 function playMovie(id, backdrop){
 	Mousetrap.bind("i", startRecord);
 	Mousetrap.bind("o", endRecord);
+	Mousetrap.bind("esc", leaveFullScreen);
+	Mousetrap.bind("ctrl+f", enterFullScreen);
 	$('body, #infos').css({"background-image": "url(" + tmdbImg( 'backdrop', 3, backdrop ) + ")"});
 	$("#first-step").fadeOut(300, function(){
 		$.get('/movie/'+id, function(r){

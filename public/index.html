@@ -11,11 +11,12 @@
   </head>
   <body>
     <div id="main">
-      <div class="hide" id="window-bar">
+      <div id="window-bar">
+        <h1>CutMaker</h1>
         <ul class="sys-btns">
-          <li><a href="javascript:;"><i class="fa fa-circle"></i></a></li>
-          <li><a href="javascript:;"><i class="fa fa-circle"></i></a></li>
-          <li><a href="javascript:;"><i class="fa fa-circle"></i></a></li>
+          <li><a href="javascript:;" style="color: green;" onclick="gui.maximize()"><i class="fa fa-circle"></i></a></li>
+          <li><a href="javascript:;" onclick="gui.minimize()" style="color: yellow;"><i class="fa fa-circle"></i></a></li>
+          <li><a href="javascript:;" style="color: red;" onclick="gui.close()"><i class="fa fa-circle"></i></a></li>
         </ul>
       </div>
       <div id="first-step">
