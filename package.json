@@ -1,6 +1,6 @@
 {
-  "name": "Demo",
-  "description": "Demo app",
+  "name": "CutMaker",
+  "description": "CutMaker",
   "version": "0.0.2",
   "main": "index.html",
   "window": {

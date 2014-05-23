@@ -1,3 +1,5 @@
+@import url(http://fonts.googleapis.com/css?family=Lato:300,400,700,900,300italic,400italic);
+
 html, body{
 	height: 100%;
 	display: block;
@@ -7,11 +9,13 @@ html, body{
 }
 
 body{
+  font-family: 'Lato';
+  font-weight: 300;
 	background-color: #111;
 	background-position: center center;
 	background-size: cover;
 	background-attachment: fixed;
-	color: #e7e7e7;
+	color: #fff;
   -webkit-transition: all .3s ease-in-out;
   -moz-transition: all .3s ease-in-out;
   -ms-transition: all .3s ease-in-out;
@@ -54,6 +58,8 @@ box-shadow: 0px 0px 0px 1px #333, 0px 0px 20px 0 rgba(0,0,0,.7);
 #first-step h3{
   font-weight: normal;
   text-align: center;
+  font-weight: normal;
+  font-family: 'Lato';
 }
 
 .choose-list{
@@ -112,10 +118,15 @@ box-shadow: 0px 0px 0px 1px #333, 0px 0px 20px 0 rgba(0,0,0,.7);
   margin: 0;
   padding: 0;
 }
+
+#nav li{
+  float: right;
+}
+
 #nav > li a{
   display: block;
-  line-height: 30px;
-  width: 30px;
+  line-height: 40px;
+  width: 40px;
   text-align: center;
   color: #fff;
   font-size: 24px;
@@ -157,6 +168,95 @@ box-shadow: 0px 0px 0px 1px #333, 0px 0px 20px 0 rgba(0,0,0,.7);
   background-position: center center;
   background-repeat: no-repeat;
   background-attachment: fixed;
+}
+
+#infos h3{
+  font-weight: 300;
+  font-size: 32px;
+  font-family: 'Lato';
+}
+
+#records-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+#records-list > li {
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    cursor: pointer;
+    position: relative;
+}
+#records-list > li > a{
+  color: #fff;
+  font-size: 18px;
+  -webkit-transition: all .15s ease-in-out;
+  -moz-transition: all .15s ease-in-out;
+  -ms-transition: all .15s ease-in-out;
+  -o-transition: all .15s ease-in-out;
+  transition: all .15s ease-in-out;
+  display: block;
+  padding: 10px 10px 10px 50px;
+  text-decoration: none;
+}
+.time {
+display: block;
+line-height: 2;
+font-size: 12px;
+color: #999;
+font-weight: normal;
+}
+#records-list > li:hover > a{
+  padding-left: 60px;
+}
+#records-list > li > .status-light{
+  position: absolute;
+  line-height: 70px;
+  width: 30px;
+  text-align: center;
+  left: 0;
+  top: 0;
+  color: yellow;
+}
+
+.s-draft .status-light{
+  color: yellow !important;
+}
+
+.s-published .status-light{
+  color: red !important;
+}
+
+#records-list > li:hover .actions{
+  opacity: 1;
+  top: 0px;
+}
+
+#records-list > li .actions{
+  position: absolute;
+  list-style: none;
+  right: 20px;
+  top: -10px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  -webkit-transition: all .15s ease-in-out;
+  -moz-transition: all .15s ease-in-out;
+  -ms-transition: all .15s ease-in-out;
+  -o-transition: all .15s ease-in-out;
+  transition: all .15s ease-in-out;
+}
+
+#records-list > li > .actions li{
+  float: left;
+  line-height: 45px;
+  width: 45px;
+  font-size: 14px;
+}
+#records-list > li > .actions > li > a{
+  color: #f0f0f0;
+  text-align: center;
+  text-decoration: none;
 }
 
 #recording{

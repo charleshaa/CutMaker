@@ -11,6 +11,13 @@
   </head>
   <body>
     <div id="main">
+      <div class="hide" id="window-bar">
+        <ul class="sys-btns">
+          <li><a href="javascript:;"><i class="fa fa-circle"></i></a></li>
+          <li><a href="javascript:;"><i class="fa fa-circle"></i></a></li>
+          <li><a href="javascript:;"><i class="fa fa-circle"></i></a></li>
+        </ul>
+      </div>
       <div id="first-step">
         <h3>Choose a file</h3>
         <input type="file" id="file">
@@ -20,7 +27,8 @@
           <i id="status" class="fa fa-circle" style="color:red;"></i> <span id="timer">14</span>
         </div>
         <ul id="nav">
-          <li><a href="#" class="open-infos"><i class="fa fa-info-circle"></i></a></li>
+          <li><a href="#" class="open-infos"><i class="fa fa-bars"></i></a></li>
+          <li><a href="#" id="help" title="Press `i` to start recording<br>Press `o` to stop recording"><i class="fa fa-support"></i></a></li>
         </ul>
         <video id="player" class="video-js vjs-default-skin">
           <source type="video/mp4" src=""></source>
@@ -28,7 +36,7 @@
         <div id="infos">
           <div class="row-fluid" style="display:none;">
             <div class="col-md-12">
-              <h3>Recorded Cuts <a class="pull-right" href="javascript:;" id="refresh-records"><i class="fa fa-refresh"></i></a></h3>
+              <h3>Recorded Cuts</h3>
               <ul id="records-list"></ul>
             </div>
           </div>
@@ -36,14 +44,34 @@
       </div>
       
     </div>
-     
+    
+    <!-- Modals -->
+
+    <div id="title-modal" tab-index="-1" aria-hidden="true" class="modal fade">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 style="margin:0;color: #222;">Set title</h3>
+          </div>
+          <div class="modal-body">
+            <form id="set-title" class="form-inline" role="form">
+              <div class="form-group">
+                <label class="sr-only" for="new-title">New title</label>
+                <input type="text" class="form-control" placeholder="New title" id="new-title" />
+              </div>
+              <button type="submit" class="btn btn-success">Edit</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script src="js/mousetrap.min.js"></script>
     <script src="js/jquery.min.js"></script>
     <script src="js/jquery.cookie.js"></script>
     <script src="js/jquery.total-storage.min.js"></script>
     <script src="js/mustache.js"></script>
-    <script src="js/bootstrap.js"></script>
+    <script src="js/bootstrap.min.js"></script>
     <script src="lib/video/video.dev.js"></script>
     <script src="js/scripts.js"></script>
     <script src="js/app.js"></script>

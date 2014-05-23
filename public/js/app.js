@@ -1,4 +1,4 @@
-var body, player, file, tmdb, movie, conf, records, curRecord, tempRecord, timer, cutTimeout;
+var body, player, file, tmdb, movie, conf, records, curRecord, tempRecord, timer, cutTimeout, currIndex;
 
 function tmdbImg(type, size, path){
 	return tmdb.images.base_url + tmdb.images[type+"_sizes"][size] + path;
@@ -40,9 +40,10 @@ function endRecord(){
 	console.log(records);
 	$.totalStorage('records_'+movie.id, records);
 	curRecord = {
-		title: "Cut "+records.length,
+		title: movie.original_title+" - Cut " + (records.length + 1),
 		start: undefined,
-		end: undefined
+		end: undefined,
+		status: "draft"
 	};
 	$('#status').css('color', 'green');
 	$('#timer').text("Your cut has been saved !");
@@ -62,12 +63,21 @@ function drawRecords(){
 	$('#records-list').empty();
 
 	for(i=0;i<records.length;i++){
-		tmp = '<li><a href="#" class="tocut" data-start="{{start}}" data-end="{{end}}">Cut n°'+i+'</a></li>';
+		tmp = '<li class="s-{{status}}"><a href="#" class="tocut" data-start="{{start}}" data-index="'+i+'" data-end="{{end}}">{{title}}';
+		tmp += '<span class="time">From '+secToTime(records[i].start)+' to '+secToTime(records[i].end)+'</span>';
+		tmp += '</a><i class="fa fa-circle status-light"></i>';
+		tmp += '<ul class="actions">';
+		tmp += '<li><a data-placement="top" title="Edit title" class="tipped action-edit-title" data-index="'+i+'" href="#"><i class="fa fa-edit"></i></a></li>';
+		tmp += '<li><a data-placement="top" title="Delete" class="tipped action-delete" data-index="'+i+'" href="#"><i class="fa fa-times"></i></a></li>';
+		tmp += '<li><a data-placement="top" title="Publish" class="tipped action-publish" data-index="'+i+'" href="#"><i class="fa fa-cloud-upload"></i></a></li>'
+		tmp += '</ul></li>';
 		html += Mustache.render(tmp, records[i]);
 	}
+	if(records.length <= 0) html = '<li class="msg">You haven\'t recorded any Cuts for this movie yet</li>';
 	console.log(html);
 	$('#records-list').append(html);
-	return false;
+	$('.tipped').tooltip();
+	//return false;
 }
 
 function playMovie(id, backdrop){
@@ -80,9 +90,10 @@ function playMovie(id, backdrop){
 			records = $.totalStorage('records_'+r.id) || [];
 			// Instanciate blank record ready for use
 			curRecord = {
-				title = "Cut "+
+				title: movie.original_title+" - Cut " + ( records.length + 1 ),
 				start: undefined,
-				end: undefined
+				end: undefined,
+				status: "draft"
 			};
 			var fileURL = window.URL.createObjectURL(file);
 			  $('#video').attr('src', fileURL);
@@ -96,7 +107,58 @@ function playMovie(id, backdrop){
 	});
 }
 
+function setTitle(index, title){
+	console.log("setting title for");
+	var rec = records.slice(index, index+1)[0];
+	console.log(rec);
+	rec.title = title;
+	console.log("as "+title);
+	records[index] = rec;
+	$.totalStorage('records_'+movie.id, records); 
+}
+
+function to2(number) {
+     return (number < 10 ? '0' : '') + number;
+}
+
+function secToTime(val){
+	var minutes = to2(parseInt(val/60));
+	var seconds = to2(parseInt((val%60)));
+	return ''+minutes+':'+seconds;
+}
+
+function openTitleModal(e){
+	var data = $(this).data();
+	currIndex = data.index;
+	$('#title-modal').modal({
+		show: true,
+		backdrop: true
+	});
+
+	
+	console.log("Modal shown");
+	$('#new-title').val(records[currIndex].title);
+	if($('#current-index').length > 0){
+		$('#current-index').val(currIndex);
+	} else {
+		$('#set-title').append('<input id="current-index" type="hidden" value="'+currIndex+'" name="currindex" />');
+	}		
+
+	$('#title-modal').on('hide.bs.modal', drawRecords);
+	return false;
+}
+
+function submitTitle(e){
+	e.preventDefault();
+	var index = $('#current-index').val(),
+		title = $('#new-title').val();
+	setTitle(index, title);
+	$('#title-modal').modal('hide');
+	return false;
+}
+
 function openInfos(event, callback){
+	player.pause();
 	drawRecords();
 	$(this).addClass('opened');
 	$('#player-wrap').addClass('aside');
@@ -112,11 +174,23 @@ function closeInfos(event, callback){
 	$('#infos').find('.row-fluid').fadeOut(500, callback);
 }
 
+function deleteItem(e){
+	e.preventDefault();
+	var data = $(this).data(),
+		index = data.index;
+	if(confirm("Are you sure you want to delete "+ records[index].title+" ?")){
+		records.splice(index, 1);
+		$.totalStorage('records_'+movie.id, records);
+		$(this).parent().parent().parent().slideUp(200, drawRecords);
+	}
+}
+
 function goToCut(){
 	clearTimeout(cutTimeout);
 	var data = $(this).data();
 	console.log(data);
 	closeInfos(undefined, function(){
+		$("#nav").find('.open-infos').removeClass('opened');
 		player.currentTime(data.start).play();
 		var inter = parseInt( (data.end - data.start) * 1000); 
 		cutTimeout = setTimeout(function(){
@@ -168,7 +242,11 @@ $(document).ready(function(){
 
 	// Guess what movie it is
 	$('#file').on('change', guess);
-
+	$('#help').tooltip({
+		html: true,
+		placement: 'bottom',
+		container: 'body'
+	});
 	// Change backdrop on hover
 	body.on('mouseenter', '.play-movie', function(){
 		var backdrop = $(this).data('backdrop');
@@ -188,9 +266,13 @@ $(document).ready(function(){
 
 	//events in movie mode
 	$('#refresh-records').click(drawRecords);
+	$('#set-title').on('submit', submitTitle);
+
 	body.on('click', '.open-infos', openInfos);
 	body.on('click', '.open-infos.opened', closeInfos);
 	body.on('click', '.tocut', goToCut);
+	body.on('click', '.action-edit-title', openTitleModal);
+	body.on('click', '.action-delete', deleteItem);
 	
 
 });
