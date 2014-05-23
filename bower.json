@@ -1,0 +1,9 @@
+{
+  "name": "CutMaker",
+  "version": "0.0.0",
+  "dependencies": {
+  	"mousetrap" : "*",
+  	"jquery": ">1.9"
+  }
+}
+

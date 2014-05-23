@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Movieater</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.css" rel="stylesheet" media="screen">
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" media="screen">
+    <link href="css/style.css" rel="stylesheet" media="screen">
+  </head>
+  <body>
+    <div id="main">
+      <div id="first-step">
+        <h3>Choose a file</h3>
+        <input type="file" id="file">
+      </div>
+      <div id="player-wrap">
+        <div id="recording">
+          <i id="status" class="fa fa-circle" style="color:red;"></i> <span id="timer">14</span>
+        </div>
+        <ul id="nav">
+          <li><a href="#" class="open-infos"><i class="fa fa-info-circle"></i></a></li>
+        </ul>
+        <video id="player" class="video-js vjs-default-skin">
+          <source type="video/mp4" src=""></source>
+        </video>
+        <div id="infos">
+          <div class="row-fluid" style="display:none;">
+            <div class="col-md-12">
+              <h3>Recorded Cuts <a class="pull-right" href="javascript:;" id="refresh-records"><i class="fa fa-refresh"></i></a></h3>
+              <ul id="records-list"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+     
+
+    <script src="js/mousetrap.min.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/jquery.cookie.js"></script>
+    <script src="js/jquery.total-storage.min.js"></script>
+    <script src="js/mustache.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script src="lib/video/video.dev.js"></script>
+    <script src="js/scripts.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
