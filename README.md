@@ -1,35 +1,26 @@
-node-webkit-nedb-rest-angular
+CutMaker
 =============================
 
-AngularJS native desktop app (node-webkit, nedb, express, rest, angular)
+A video player which finds the movie your playing, and allow you to cut it as a piece of cake.
+You will need node-webkit to build it, and ffmpeg and guessit to use it
 
 ```
-  git clone https://github.com/buberdds/node-webkit-nedb-rest-angular.git
-  cd node-webkit-nedb-rest-angular
-  npm install
-  cd ..
+  brew install ffmpeg
+  brew install python
+  pip install guessit
+
 ```
 
 <a href="https://github.com/rogerwang/node-webkit#downloads" target="_blank">Download</a> the prebuilt node-webkit binary for your platform and
 use it to run the app.
 
 ```
-  nw node-webkit-nedb-rest-angular
+  nodewebkit app
 ```
 
-Alternatively, you can cd into the directory where the project files and folders are and run this command:
+## Usage
 
-```
-  zip -r ../${PWD##*/}.nw *
-```
+Once the video has started playing, hit `i` to start recording and `o` to stop.
 
-This will create a .nw zip package that exists just in the folder just before the folder where your files exist.
-
-Once the zip package is created, store it in the same folder as the node-webkit unpacked bundle and simply drag the .nw zip file to the "nw" executable.
-
-Note. This solution is for linux.
-
-To view other solutions, please consult:
-
-https://github.com/rogerwang/node-webkit/wiki/How-to-package-and-distribute-your-apps
+CutMaker uses localStorage to store recorded Cuts.
 
