@@ -13,15 +13,18 @@
     <div id="main">
       <div id="window-bar">
         <h1>CutMaker</h1>
+        <p id="user-recap"></p>
         <ul class="sys-btns">
           <li><a href="javascript:;" style="color: green;" onclick="gui.maximize()"><i class="fa fa-circle"></i></a></li>
           <li><a href="javascript:;" onclick="gui.minimize()" style="color: yellow;"><i class="fa fa-circle"></i></a></li>
           <li><a href="javascript:;" style="color: red;" onclick="gui.close()"><i class="fa fa-circle"></i></a></li>
         </ul>
+        <a id="show-settings" href="#settings-modal" data-toggle="modal" class="pull-right" style="margin-left: 20px;line-height: 40px;width:40px;text-align:center; text-decoration: none; color: #333;"><i class="fa fa-cog"></i></a>
       </div>
       <div id="first-step">
         <h3>Choose a file</h3>
-        <input type="file" id="file">
+        <a href="#" id="choose-file" class="btn btn-lg btn-primary" style="margin-top: 100px;">Browse...</a>
+        <input type="file" style="display:none;" id="file">
       </div>
       <div id="player-wrap">
         <div id="recording">
@@ -52,7 +55,7 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h3 style="margin:0;color: #222;">Set title</h3>
+            <h3>Set title</h3>
           </div>
           <div class="modal-body">
             <form id="set-title" class="form-inline" role="form">
@@ -66,7 +69,41 @@
         </div>
       </div>
     </div>
-
+    <div id="settings-modal" class="modal fade">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 style="float:left;">Settings</h3>
+            <a href="#" id="save-settings" data-loading-text="Saving..." class="btn pull-right btn-sm btn-success">Save</a>
+            <div class="clearfix"></div>
+          </div>
+          <div class="modal-body">
+            <form id="settings-form" class="form">
+              <h6>Cultcut credentials</h6>
+              <div class="alert" style="display:none;" id="creds-status"></div>
+              <div class="form-group">
+                <label for="admin-login">Email</label>
+                <input class="form-control" type="text" placeholder="Email" name="username" id="admin-login">
+              </div>
+              <div class="form-group">
+                <label for="admin-pwd">Password</label>
+                <input class="form-control" type="password" placeholder="Password" name="pwd" id="admin-pwd">
+              </div>
+              <div id="login-status" style="display:none;"></div>
+              <h6>Video files folder</h6>
+              <div class="alert" style="display:none;" id="path-status"></div>
+              <div class="form-group">
+                <label for="upload-path">Folder path</label>
+                <input type="text" id="upload-path" placeholder="Path" name="path" class="form-control">
+                <input type="file" id="choose-upload-path" name="choose-path" nwdirectory style="display:none;">
+              </div>
+              <div id="ffmpeg-status"></div>
+              <div id="guessit-status"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
     <script src="js/mousetrap.min.js"></script>
     <script src="js/jquery.min.js"></script>
     <script src="js/jquery.cookie.js"></script>

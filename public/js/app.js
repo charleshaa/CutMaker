@@ -1,5 +1,34 @@
-var body, player, file, tmdb, movie, conf, records, curRecord, tempRecord, timer, cutTimeout, currIndex;
-var gui = require('nw.gui').Window.get();
+var body,
+	player, 
+	file, 
+	tmdb, 
+	movie, 
+	conf, 
+	records, 
+	curRecord, 
+	tempRecord, 
+	timer, 
+	cutTimeout, 
+	currIndex, 
+	adminUser, 
+	videoPath, 
+	guessitStatus, 
+	ffmpegStatus;
+
+
+var nw = require('nw.gui');
+var	gui = nw.Window.get();
+
+var menu = new nw.Menu({type: 'menubar'});
+
+//console.log(gui.menu);
+
+
+menu.append(new nw.MenuItem({label: 'Settings', click: function(){console.log("settings");}}));
+menu.append(new nw.MenuItem({label: 'Plop', click: function(){console.log("plop");}}));
+gui.menu = menu;
+//nwMenu.append(new nw.menuItem({'label': 'Settings'}));
+
 function tmdbImg(type, size, path){
 	return tmdb.images.base_url + tmdb.images[type+"_sizes"][size] + path;
 }
@@ -215,7 +244,7 @@ function goToCut(){
 }
 
 function guess(){
-	$('#file').fadeOut(300);
+	$('#choose-file').fadeOut(300);
 	file=document.getElementById('file').files[0];
 	console.log(file.name);
 	$.post('/guess', {name: file.name}, function(r){
@@ -236,13 +265,141 @@ function guess(){
 	});
 }
 
+function setUploadPath(e){
+	e.preventDefault();
+	console.log($(this).val());
+	videoPath = $(this).val();
+	$('#upload-path').val(videoPath);
+	$.totalStorage('video_path', $(this).val());
+}
+
+function saveSettings(login, pwd, path){
+	var loginLog = $('#login-status'),
+		btn = $('#save-settings');
+
+	btn.button('loading');
+	if(login != "" && pwd != ""){
+		loginLog.html('<p class="text-info">Connecting...</p>').show();
+		// We are trying to set up the user
+		$.post('http://dev.cultcut.com/api/angular/?method=app_login', {
+			email: login,
+			pwd: pwd,
+			remember: true
+		}, function(res){
+			btn.button('reset');
+			console.log(res);
+			if(res.status == "success"){
+				adminUser = {
+					login: login,
+					pwd: pwd,
+					key: res.user.key,
+					avatar: res.user.avatar,
+					name: res.user.display_name,
+					id: res.user.ID
+				};
+				console.log(adminUser);
+				$.totalStorage('admin_user', adminUser);
+				loginLog.html('<p class="text-success">You are logged in as '+res.user.user_login+'</p>');
+				drawUser();
+				setTimeout(function(){
+					$('#creds-status').hide();
+					$('#settings-modal').modal('hide');
+				}, 800);
+			} else {
+				if(res.message){
+					loginLog.html('<p class="text-danger">Connection failed: '+res.message+' (code '+res.code+')</p>');
+				}
+			}
+		});
+	}
+
+	if(path != ""){
+		// Might be the path we are setting up
+		$.totalStorage('video_path', path);
+		if(login == "" || pwd == ""){
+			$('#settings-modal').modal('hide');
+			btn.button('reset');
+		}
+	}
+
+
+
+	
+
+}
+
+function checkSettings(){
+	var login = $('#admin-login').val(),
+		pwd = $('#admin-pwd').val(),
+		path = $('#upload-path').val();
+
+	if(login == "" || pwd == "" || path == ""){
+		if(confirm("One or more fields are empty, do you wish to save anyway ?")){
+			saveSettings(login, pwd, path);
+		} else {
+			return;
+		}
+	} else {
+		saveSettings(login, pwd, path);
+	}
+}
+
+function logout(){
+	adminUser = undefined;
+	$.totalStorage('admin_user', null);
+	drawUser();
+}
+
+function drawUser(force){
+	var tpl,
+		recapHtml,
+		errorMsg;
+
+	if(!adminUser){
+		recapHtml = '<i class="fa fa-circle" style="color: red;"></i> You are not connected';
+		errorMsg = '<p class="text-warning">You haven\'t set your Cultcut credentials. Please do so in order to publish your Cuts later.</p>';
+		$('#creds-status').html(errorMsg).show();		
+		$('#admin-login').val("");
+		$('#admin-pwd').val("");
+		if(force) $('#settings-modal').modal('show');
+	} else {
+		tpl = '<img src="{{avatar}}" id="user-avatar" alt=""> You are connected as {{name}}';
+		recapHtml = Mustache.render(tpl, adminUser);
+
+		var msg = '<p class="text-success">You are connected as '+adminUser.name+'. <a href="#" id="logout">Log out</a></p>';
+		$('#admin-login').val(adminUser.login);
+		$('#admin-pwd').val(adminUser.pwd);
+		$('#creds-status').html(msg).show();
+	}
+	$('#user-recap').html(recapHtml);
+
+}
+
 $(document).ready(function(){
 
+	adminUser = $.totalStorage('admin_user') || undefined;
+	videoPath = $.totalStorage('video_path') || undefined;
+
+	drawUser();
+
+	$('#upload-path').val(videoPath);
 
 	// get TMDB config
 	$.get('/tmdb', function(r){
 		if(r.status == "running"){
 			tmdb = r.conf;
+		}
+	});
+
+	// check for dependencies
+	$.get('/status', function(r){
+		// ffmpegStatus = r.ffmpeg;
+		// guessitStatus = r.guessit;
+		if(!r.ffmpeg){
+			$('#ffmpeg-status').html('<p class="text-danger">FFMPEG is not detected. Install Bower and run in terminal as root:</p><pre>bower install ffmpeg</pre><p>Then quit and relaunch the app</p>');
+		}
+		if(!r.guessit){
+			$('#guessit-status').html('<p class="text-danger">Python and guessit are not detected. Install Bower and run in terminal as root:</p><pre>bower install python \r\npip install guessit</pre><p>Then quit and relaunch the app</p>');
 		}
 	});
 
@@ -253,9 +410,7 @@ $(document).ready(function(){
 	$.getJSON('http://dev.cultcut.com/facelift/wp/api/cuts/?method=random_bd&callback=?', function(json){
 		$('body, #infos').css({"background-image": "url("+json.bd+")"});
 	});
-
-	// Guess what movie it is
-	$('#file').on('change', guess);
+	
 	$('#help').tooltip({
 		html: true,
 		placement: 'bottom',
@@ -278,10 +433,29 @@ $(document).ready(function(){
 		return false;
 	});	
 
+	// Global events
+	
+	$('#upload-path').on('click', function(e){
+		e.preventDefault();
+		$('#choose-upload-path').trigger('click');
+	});
+
+	$('#choose-upload-path').on('change', setUploadPath);
+	
+	$('#save-settings').on('click', checkSettings);
+
+	$('#choose-file').on('click', function(e){
+		e.preventDefault();
+		$('#file').trigger('click');
+	});
+
+	$('#file').on('change', guess);
+
+	$('#logout').on('click', logout);
+
 	//events in movie mode
 	$('#refresh-records').click(drawRecords);
 	$('#set-title').on('submit', submitTitle);
-
 	body.on('click', '.open-infos', openInfos);
 	body.on('click', '.open-infos.opened', closeInfos);
 	body.on('click', '.tocut', goToCut);

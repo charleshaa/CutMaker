@@ -21,6 +21,32 @@ app.configure(function () {
 });
 
 
+app.get('/status', function(req, res){
+  var response = {
+    guessit: false,
+    ffmpeg: false
+  };
+
+  var guessit = terminal('/usr/local/bin/guessit', function(error, stdout, stderr){
+    if(error && error.code == 127){
+      console.log(error);
+      console.log(stderr);
+    } else {
+      response.guessit = true;
+    }
+    var ffmpeg = terminal('/usr/local/bin/ffmpeg', function(e, out, err){
+      if(e && e.code == 127){
+        console.log(e);
+        console.log(err);
+        res.json(200, response);
+      } else {
+        response.ffmpeg = true;
+        res.json(200, response);
+      }
+    });
+  });
+});
+
 app.get('/tmdb', function(req, res){
   var response = {};
   tmdb.configuration(function(err, r){
