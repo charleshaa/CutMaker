@@ -68,6 +68,37 @@ app.get('/movie/:id', function(req, res){
   });
 });
 
+app.get('/movie/:id/cast', function(req, res){
+  var id = req.params.id;
+  tmdb.movie.casts(id, function(err, r){
+    res.json(200, r);
+  });
+});
+
+app.post('/encode', function(req, res){
+  var duration = req.body.end - req.body.start;
+  var ffmpegStr = "-i '"+req.body.source+"' -s 640x360 -c:v libx264 -c:a aac -ac 2 -b:a 255k -ar 48000 -async 1 -strict -2 -y -ss "+req.body.start+" -t "+duration+" '"+req.body.target+"/"+req.body.filename+".mp4'";
+  console.log(ffmpegStr);
+  var ffmpeg = terminal('/usr/local/bin/ffmpeg '+ffmpegStr, function(e, out, err){
+      if(e && e.code == 127){
+        console.log(e);
+        console.log(err);
+        res.json(200, {status: "error", message: "FFMPEG is not installed"});
+      } else {
+        console.log(e);
+        console.log(out);
+        console.log(err);
+        var response = {
+          status: "success",
+          path: req.body.target+"/"+req.body.filename+".mp4"
+        }
+        res.json(200, response);
+      }
+    });
+
+
+});
+
 app.post('/guess', function(req, res){
   var file = req.body.name;
   console.log(req.body);

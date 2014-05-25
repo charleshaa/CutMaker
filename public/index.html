@@ -104,6 +104,36 @@
         </div>
       </div>
     </div>
+    <div id="publish-modal" class="modal fade">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Publish Cut</h3>
+          </div>
+          <div class="modal-body">
+            <form id="publish-form">
+              <h6>Choose Actor</h6>
+              <div class="form-group">
+                <ul id="cast-list"></ul>
+              </div>
+              <h6>Details</h6>
+              <div class="form-group">
+                <label for="n-title">File</label>
+                <input type="text" class="form-control model" data-prop="file" placeholder="Path to video file">
+              </div>
+              <div class="form-group">
+                <label for="n-title">Title</label>
+                <input type="text" class="form-control model" data-prop="title" placeholder="Cut title">
+              </div>
+              <div class="form-group">
+                <label for="n-title">Quote</label>
+                <textarea class="form-control model" rows="3" data-prop="quote"></textarea>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
     <script src="js/mousetrap.min.js"></script>
     <script src="js/jquery.min.js"></script>
     <script src="js/jquery.cookie.js"></script>

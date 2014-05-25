@@ -111,6 +111,7 @@ function drawRecords(){
 		tmp += '<li><a data-placement="top" title="Edit title" class="tipped action-edit-title" data-index="'+i+'" href="#"><i class="fa fa-edit"></i></a></li>';
 		tmp += '<li><a data-placement="top" title="Delete" class="tipped action-delete" data-index="'+i+'" href="#"><i class="fa fa-times"></i></a></li>';
 		tmp += '<li><a data-placement="top" title="Publish" class="tipped action-publish" data-index="'+i+'" href="#"><i class="fa fa-cloud-upload"></i></a></li>'
+		tmp += '<li><a data-placement="top" title="Encode video" data-file="{{file}}" class="tipped action-encode" data-index="'+i+'" href="#"><i class="fa fa-file-movie-o"></i></a></li>'
 		tmp += '</ul></li>';
 		html += Mustache.render(tmp, records[i]);
 	}
@@ -350,6 +351,61 @@ function logout(){
 	drawUser();
 }
 
+function openPublishModal(e){
+	var index = $(this).data('index');
+
+	if(!adminUser) {
+		$('#settings-modal').modal('show');
+	} else {
+		$.get('/movie/'+movie.id+'/cast', function(r){
+			console.log(r);
+			var castHtml = ""; 
+			var tmpl =  '<li data-id="{{id}}" data-name="{{name}}" data-image="{{profile_path}}" data-desc="{{character}}">';
+				tmpl += '<div class="actor-avatar" style="background-image: url('+ tmdb.images.base_url + tmdb.images["profile_sizes"][1] + '{{profile_path}})" alt=""></div>';
+				tmpl += '<span class="name">{{name}}</span>';
+				tmpl += '<span class="role">{{character}}</span>';
+				tmpl += '</li>';
+			for(i in r.cast){
+				castHtml += Mustache.render(tmpl, r.cast[i]);
+			}
+			$('#cast-list').html(castHtml);
+			$('#publish-form .model').each(function(){
+				var prop = $(this).data('prop');
+				if(records[index][prop] != undefined) $(this).val(records[index][prop]);
+			});
+			$('#publish-modal').modal('show');
+		});
+
+		
+	}
+}
+
+function encodeVideo(e){
+	var data = $(this).data();
+	var index = data.index;
+	var path = file.path;
+	var stamp = new Date().getTime();
+	var filename = movie.id+"_cut_"+stamp;
+	$(this).css('color', 'yellow');
+	$.post('/encode', {source: path, start: records[index].start, end: records[index].end, filename: filename, target: videoPath}, function(res){
+		console.log(res);
+		if(res.status == "success"){
+			$(this).css('color', 'green');
+			records[index].file = res.path;
+			records[index].hasFile = true;
+			$.totalStorage('records_'+movie.id, records);
+		} else {
+			$(this).css('color', 'red');
+			alert(res.message);
+		}
+	}.bind(this));
+
+}
+
+function escapeShell(str){
+	return ''+str.replace(/(["\s'$`\\])/g,'\\$1')+'';
+}
+
 function drawUser(force){
 	var tpl,
 		recapHtml,
@@ -380,7 +436,7 @@ $(document).ready(function(){
 	adminUser = $.totalStorage('admin_user') || undefined;
 	videoPath = $.totalStorage('video_path') || undefined;
 
-	drawUser();
+	drawUser(true);
 
 	$('#upload-path').val(videoPath);
 
@@ -461,6 +517,8 @@ $(document).ready(function(){
 	body.on('click', '.tocut', goToCut);
 	body.on('click', '.action-edit-title', openTitleModal);
 	body.on('click', '.action-delete', deleteItem);
+	body.on('click', '.action-publish', openPublishModal);
+	body.on('click', '.action-encode', encodeVideo);
 	
 
 });
