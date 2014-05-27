@@ -4,6 +4,7 @@ var
   nedb = require('nedb'),
   tmdb = require('tmdbv3').init("bce753a11c69e6ae5ec03c4ab2ea1484"),
   request = require('request'),
+  fs = require('fs'),
   terminal = require("child_process").exec,
   databaseUrl = "db/items.db";
 
@@ -68,11 +69,47 @@ app.get('/movie/:id', function(req, res){
   });
 });
 
+app.get('/show/:id', function(req, res){
+  var id = req.params.id;
+  tmdb.show.info(id, function(err, r){
+    res.json(200, r);
+  });
+});
+app.get('/show/:id/cast', function(req, res){
+  var id = req.params.id;
+  tmdb.show.cast(id, function(err, r){
+    res.json(200, r);
+  });
+});
+
 app.get('/movie/:id/cast', function(req, res){
   var id = req.params.id;
   tmdb.movie.casts(id, function(err, r){
     res.json(200, r);
   });
+});
+
+app.post('/publish', function(req, res){
+  var item = req.body,
+      r = request.post("http://dev.cultcut.com/api/angular/?method=cutmaker_publish", function(err, response, body){
+        if(err){
+          // console.log("Failed: ", err);
+          res.json(200, {status: err});
+        } else {
+          console.log("Success !", body);
+          res.json(200, {res: JSON.parse(body)});
+        } 
+      });
+
+  var form = r.form();
+  form.append('title', item.title);
+  form.append('quote', item.quote);
+  form.append('type', item.type);
+  form.append('lang', item.lang);
+  form.append('context', JSON.stringify(item.context));
+  form.append('person', JSON.stringify(item.person));
+  form.append('tags', item.tags);
+  form.append('video_file', fs.createReadStream(item.file));
 });
 
 app.post('/encode', function(req, res){
@@ -109,12 +146,13 @@ app.post('/guess', function(req, res){
         var json = stdout.split("GuessIt found: ")[1];
         var json = JSON.parse(json);
         var type = json.type.value;
-
         if(type == "episode"){
-
+          tmdb.search.tv(json.series.value, 1, function(err, r){
+            res.json(200, {type: "tv", results: r.results, guessed: json});
+          });
         } else {
           tmdb.search.movie(json.title.value, 1, function(err, r){
-            res.json(200, r.results);
+            res.json(200, {type: "movie", results: r.results, guessed: json});
           });
         }
         

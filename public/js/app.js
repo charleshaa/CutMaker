@@ -13,7 +13,12 @@ var body,
 	adminUser, 
 	videoPath, 
 	guessitStatus, 
-	ffmpegStatus;
+	ffmpegStatus,
+	episode,
+	recordsName,
+	endpoint,
+	smallPlayer,
+	mediaType;
 
 
 var nw = require('nw.gui');
@@ -43,6 +48,10 @@ function startTimer(){
 			clearInterval(timer);
 		} 
 	}, 1000);
+}
+
+function showInspector(){
+	gui.showDevTools();
 }
 
 function enterFullScreen(){
@@ -79,7 +88,7 @@ function endRecord(){
 	stopTimer();
 	records.push(curRecord);
 	console.log(records);
-	$.totalStorage('records_'+movie.id, records);
+	$.totalStorage(recordsName, records);
 	curRecord = {
 		title: movie.original_title+" - Cut " + (records.length + 1),
 		start: undefined,
@@ -98,15 +107,17 @@ function endRecord(){
 
 function drawRecords(){
 	var 
-		records = $.totalStorage('records_'+movie.id) || [],
+		records = $.totalStorage(recordsName) || [],
 		html = '';
 
 	$('#records-list').empty();
 
 	for(i=0;i<records.length;i++){
+		var color = (records[i].file) ? 'blue' : 'yellow';
+		if(records[i].published) color = "green";
 		tmp = '<li class="s-{{status}}"><a href="#" class="tocut" data-start="{{start}}" data-index="'+i+'" data-end="{{end}}">{{title}}';
 		tmp += '<span class="time">From '+secToTime(records[i].start)+' to '+secToTime(records[i].end)+'</span>';
-		tmp += '</a><i class="fa fa-circle status-light"></i>';
+		tmp += '</a><i class="fa fa-circle status-light" style="color: '+color+';"></i>';
 		tmp += '<ul class="actions">';
 		tmp += '<li><a data-placement="top" title="Edit title" class="tipped action-edit-title" data-index="'+i+'" href="#"><i class="fa fa-edit"></i></a></li>';
 		tmp += '<li><a data-placement="top" title="Delete" class="tipped action-delete" data-index="'+i+'" href="#"><i class="fa fa-times"></i></a></li>';
@@ -122,23 +133,67 @@ function drawRecords(){
 	//return false;
 }
 
-function playMovie(id, backdrop){
+function drawSmallPlayer(file){
+	if(smallPlayer){
+		smallPlayer.src('file://'+file);
+	} else {
+		smallPlayer = videojs('small-player', {
+			  	controls: true,
+			  	autoplay: true,
+			  	width: 538,
+			  	height: 300
+			  }, function(){
+			  	
+			  }).src('file://'+file);
+	}
+	
+}
+
+function publishCut(){
+
+	var newCut = {};
+	$('#publish-form').find('.model').each(function(){
+		newCut[$(this).data('prop')] = $(this).val();
+	});
+	newCut.person = records[currIndex].actor;
+	newCut.context = movie;
+	newCut.type = mediaType;
+	$.post('/publish', newCut, function(r){
+		console.log(r);
+		if(r.res.status == "success"){
+			alert("Your cut has been successfully published, it is now awaiting moderation.");
+			records[currIndex].published = true;
+			records[currIndex].remote_id = r.res.id;
+			$('#publish-modal').modal('hide');
+		} else {	
+			console.log("ERROR");
+			alert(r.res.message);
+		}
+	});
+	return false;
+}
+
+function playMovie(id, backdrop, type){
 	Mousetrap.bind("i", startRecord);
 	Mousetrap.bind("o", endRecord);
 	Mousetrap.bind("esc", leaveFullScreen);
 	Mousetrap.bind("ctrl+f", enterFullScreen);
+	endpoint = (type == 'movie') ? '/movie/'+id : '/show/'+id;
+	mediaType = type;
 	$('body, #infos').css({"background-image": "url(" + tmdbImg( 'backdrop', 3, backdrop ) + ")"});
 	$("#first-step").fadeOut(300, function(){
-		$.get('/movie/'+id, function(r){
+		$.get(endpoint, function(r){
 			movie = r;
-			records = $.totalStorage('records_'+r.id) || [];
+			recordsName = (type == 'movie') ? 'records_'+r.id : 'records_'+r.id+'_'+episode.season+'_'+episode.episode;
+			records = $.totalStorage(recordsName) || [];
 			// Instanciate blank record ready for use
 			curRecord = {
-				title: movie.original_title+" - Cut " + ( records.length + 1 ),
+				title: (movie.original_title || movie.original_name)+" - Cut " + ( records.length + 1 ),
 				start: undefined,
 				end: undefined,
 				status: "draft"
 			};
+			if(type == "tv") curRecord.episode = episode;
 			var fileURL = window.URL.createObjectURL(file);
 			  $('#video').attr('src', fileURL);
 			  player = videojs('player', {
@@ -146,6 +201,9 @@ function playMovie(id, backdrop){
 			  	autoplay: true
 			  }, function(){
 			  	$('#player-wrap').fadeIn(500);
+			  	Mousetrap.bind("space", function(){
+			  		return (player.paused()) ? player.play() : player.pause();
+			  	});
 			  }).src(fileURL);
 		});
 	});
@@ -158,7 +216,7 @@ function setTitle(index, title){
 	rec.title = title;
 	console.log("as "+title);
 	records[index] = rec;
-	$.totalStorage('records_'+movie.id, records); 
+	$.totalStorage(recordsName, records); 
 }
 
 function to2(number) {
@@ -224,7 +282,7 @@ function deleteItem(e){
 		index = data.index;
 	if(confirm("Are you sure you want to delete "+ records[index].title+" ?")){
 		records.splice(index, 1);
-		$.totalStorage('records_'+movie.id, records);
+		$.totalStorage(recordsName, records);
 		$(this).parent().parent().parent().slideUp(200, drawRecords);
 	}
 }
@@ -251,12 +309,22 @@ function guess(){
 	$.post('/guess', {name: file.name}, function(r){
 		console.log(r);
 		var item;
-		var html = '<div class="alert alert-info">We have found those movies. Which one do you wish to Cut ?</div>';
+		var scope = (r.type == "tv") ? "TV Shows" : "movies";
+		if(r.type == "tv"){
+			if(r.guessed.episodeNumber && r.guessed.season){
+				episode = {
+					season: r.guessed.season.value,
+					episode: r.guessed.episodeNumber.value,
+					raw: r.guessed.episodeNumber.raw
+				};
+			}
+		}
+		var html = '<div class="alert alert-info">We have found those '+scope+'. Which one do you wish to Cut ?</div>';
 		html += "<ul class='choose-list'>";
-		for(i in r){
-			item = r[i];
+		for(i in r.results){
+			item = r.results[i];
 			html += '<li>';
-			html += '<a href="#" class="play-movie" data-id="'+item.id+'" data-backdrop="'+item.backdrop_path+'">';
+			html += '<a href="#" class="play-movie" data-type="'+r.type+'" data-id="'+item.id+'" data-backdrop="'+item.backdrop_path+'">';
 			html += '<img src="'+tmdbImg('poster', 2, item.poster_path)+'">';
 			html += '</a>';
 			html += '</li>';
@@ -353,14 +421,16 @@ function logout(){
 
 function openPublishModal(e){
 	var index = $(this).data('index');
-
+	currIndex = index;
+	console.log(index);
+	if(!records[currIndex].file) return alert("You need to encode the video before sending the cut !");
 	if(!adminUser) {
 		$('#settings-modal').modal('show');
 	} else {
-		$.get('/movie/'+movie.id+'/cast', function(r){
+		$.get(endpoint+'/cast', function(r){
 			console.log(r);
-			var castHtml = ""; 
-			var tmpl =  '<li data-id="{{id}}" data-name="{{name}}" data-image="{{profile_path}}" data-desc="{{character}}">';
+			var castHtml = '<li class="select-actor" data-id="0" data-name="Unidentified" data-image="" data-desc="Unknown actor"><div class="actor-avatar" style="background-image:url(http://placehold.it/300x300);"></div><span class="name">Unidientified</span><span class="role">Unknown actor</span></li>';
+			var tmpl =  '<li class="select-actor" data-id="{{id}}" data-name="{{name}}" data-image="'+ tmdb.images.base_url + "original" + '{{profile_path}}" data-desc="{{character}}">';
 				tmpl += '<div class="actor-avatar" style="background-image: url('+ tmdb.images.base_url + tmdb.images["profile_sizes"][1] + '{{profile_path}})" alt=""></div>';
 				tmpl += '<span class="name">{{name}}</span>';
 				tmpl += '<span class="role">{{character}}</span>';
@@ -374,13 +444,23 @@ function openPublishModal(e){
 				if(records[index][prop] != undefined) $(this).val(records[index][prop]);
 			});
 			$('#publish-modal').modal('show');
+			records[currIndex].file;
+			if(records[currIndex].file) drawSmallPlayer(records[currIndex].file);
 		});
 
 		
 	}
 }
 
+function setActor(e){
+	var actor = $(this).data();
+	console.log(actor);
+	records[currIndex].actor = actor;
+	$(this).siblings().fadeOut(300);
+}
+
 function encodeVideo(e){
+	if(!videoPath) return alert("Please specify an output folder in the settings");
 	var data = $(this).data();
 	var index = data.index;
 	var path = file.path;
@@ -393,7 +473,7 @@ function encodeVideo(e){
 			$(this).css('color', 'green');
 			records[index].file = res.path;
 			records[index].hasFile = true;
-			$.totalStorage('records_'+movie.id, records);
+			$.totalStorage(recordsName, records);
 		} else {
 			$(this).css('color', 'red');
 			alert(res.message);
@@ -432,6 +512,8 @@ function drawUser(force){
 }
 
 $(document).ready(function(){
+
+	Mousetrap.bind("ctrl+i", showInspector);
 
 	adminUser = $.totalStorage('admin_user') || undefined;
 	videoPath = $.totalStorage('video_path') || undefined;
@@ -485,7 +567,7 @@ $(document).ready(function(){
 	// click on the poster
 	body.on('click', '.play-movie', function(){
 		var data = $(this).data();
-		playMovie(data.id, data.backdrop);
+		playMovie(data.id, data.backdrop, data.type);
 		return false;
 	});	
 
@@ -519,6 +601,9 @@ $(document).ready(function(){
 	body.on('click', '.action-delete', deleteItem);
 	body.on('click', '.action-publish', openPublishModal);
 	body.on('click', '.action-encode', encodeVideo);
+	body.on('click', '.select-actor', setActor);
+	
+	$('#publish-cut').on('click', publishCut);
 	
 
 });
