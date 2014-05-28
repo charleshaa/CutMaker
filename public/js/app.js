@@ -18,7 +18,9 @@ var body,
 	recordsName,
 	endpoint,
 	smallPlayer,
-	mediaType;
+	mediaType,
+	mouseTimeOut,
+	blockTimeOut;
 
 
 var nw = require('nw.gui');
@@ -127,10 +129,8 @@ function drawRecords(){
 		html += Mustache.render(tmp, records[i]);
 	}
 	if(records.length <= 0) html = '<li class="msg">You haven\'t recorded any Cuts for this movie yet</li>';
-	console.log(html);
 	$('#records-list').append(html);
 	$('.tipped').tooltip();
-	//return false;
 }
 
 function drawSmallPlayer(file){
@@ -150,7 +150,7 @@ function drawSmallPlayer(file){
 }
 
 function publishCut(){
-
+	$(this).button('loading');
 	var newCut = {};
 	$('#publish-form').find('.model').each(function(){
 		newCut[$(this).data('prop')] = $(this).val();
@@ -160,17 +160,26 @@ function publishCut(){
 	newCut.type = mediaType;
 	$.post('/publish', newCut, function(r){
 		console.log(r);
+		$(this).button('reset');
 		if(r.res.status == "success"){
 			alert("Your cut has been successfully published, it is now awaiting moderation.");
 			records[currIndex].published = true;
 			records[currIndex].remote_id = r.res.id;
+			records[currIndex].status = "published";
 			$('#publish-modal').modal('hide');
 		} else {	
 			console.log("ERROR");
 			alert(r.res.message);
 		}
-	});
+	}.bind(this));
 	return false;
+}
+
+function seekBack(){
+	var much = $(this).data('time') || 5;
+	var now = player.currentTime();
+	var then = now - much;
+	return player.currentTime(then);
 }
 
 function playMovie(id, backdrop, type){
@@ -204,7 +213,11 @@ function playMovie(id, backdrop, type){
 			  	Mousetrap.bind("space", function(){
 			  		return (player.paused()) ? player.play() : player.pause();
 			  	});
+			  	$('#player').find('.vjs-control-bar').addClass('will-hide');
 			  }).src(fileURL);
+			  player.on('play', function(){
+			  		closeInfos();
+			  });
 		});
 	});
 }
@@ -271,7 +284,7 @@ function openInfos(event, callback){
 }
 
 function closeInfos(event, callback){
-	$(this).removeClass('opened');
+	$("#nav").find('.open-infos').removeClass('opened');
 	$('#player-wrap').removeClass('aside');
 	$('#infos').find('.row-fluid').fadeOut(500, callback);
 }
@@ -511,6 +524,10 @@ function drawUser(force){
 
 }
 
+function backHome(){
+	return document.location.reload();
+}
+
 $(document).ready(function(){
 
 	Mousetrap.bind("ctrl+i", showInspector);
@@ -571,6 +588,41 @@ $(document).ready(function(){
 		return false;
 	});	
 
+	$('.seek-back').tooltip();
+	
+	$('#player-wrap').on('mousemove', function(){
+
+	    var thiis  = $(this),
+	        time   = thiis.data('timer'),
+	        buffer = thiis.data('buffer'),
+	        newTime;
+
+	    if (!buffer){
+
+	        if (time){
+
+	            clearTimeout(time);
+	        }
+
+	        $('.will-hide').fadeIn(300);
+
+	        thiis.removeClass('nocursor');
+
+	        newTime = setTimeout(function(){
+
+	            thiis.addClass('nocursor');
+	            $('.will-hide').fadeOut(300);
+	            thiis.data('buffer', true);
+
+	        }, 2000);
+	    } else {
+
+	        thiis.data('buffer', false);
+	    }
+
+	    thiis.data('timer', newTime);
+	});
+
 	// Global events
 	
 	$('#upload-path').on('click', function(e){
@@ -602,7 +654,9 @@ $(document).ready(function(){
 	body.on('click', '.action-publish', openPublishModal);
 	body.on('click', '.action-encode', encodeVideo);
 	body.on('click', '.select-actor', setActor);
+	body.on('click', '.seek-back', seekBack);
 	
+	$('#back-home').on('click', backHome);
 	$('#publish-cut').on('click', publishCut);
 	
 

@@ -30,9 +30,17 @@
         <div id="recording">
           <i id="status" class="fa fa-circle" style="color:red;"></i> <span id="timer">14</span>
         </div>
-        <ul id="nav">
+        <ul id="nav" class="will-hide">
           <li><a href="#" class="open-infos"><i class="fa fa-bars"></i></a></li>
+          <li><a href="#" id="back-home"><i class="fa fa-times"></i></a></li>
           <li><a href="#" id="help" title="Press `i` to start recording<br>Press `o` to stop recording"><i class="fa fa-support"></i></a></li>
+        </ul>
+        <ul id="controls" class="will-hide">
+          <li><a class="seek-back" title="Go back 10s" data-time="10" href="#"><i class="fa fa-step-backward"></i></a></li>
+          <li><a class="seek-back" title="Go back 5s" data-time="5" href="#"><i class="fa fa-step-backward"></i></a></li>
+          <li><a class="seek-back" title="Go back 2s" data-time="2" href="#"><i class="fa fa-fast-backward"></i></a></li>
+          <li><a class="seek-back" title="Go back 1s" data-time="1" href="#"><i class="fa fa-fast-backward"></i></a></li>
+          <li><a class="seek-back" title="Go back 1/2s" data-time="0.5" href="#"><i class="fa fa-fast-backward"></i></a></li>
         </ul>
         <video id="player" class="video-js vjs-default-skin">
           <source type="video/mp4" src=""></source>
@@ -148,7 +156,7 @@
               </div>
               <h6>You're finished ?</h6>
               <div class="form-group">
-                <button class="btn btn-lg btn-block btn-success" type="button" id="publish-cut">Publish</button>
+                <button class="btn btn-lg btn-block btn-success" data-loading-text="Submitting..." type="button" id="publish-cut">Publish</button>
               </div>
             </form>
           </div>
