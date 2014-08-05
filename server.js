@@ -91,7 +91,7 @@ app.get('/movie/:id/cast', function(req, res){
 
 app.post('/publish', function(req, res){
   var item = req.body,
-      r = request.post("http://dev.cultcut.com/api/angular/?method=cutmaker_publish", function(err, response, body){
+      r = request.post("http://cultcut-env.elasticbeanstalk.com/api/angular/?method=cutmaker_publish", function(err, response, body){
         if(err){
           // console.log("Failed: ", err);
           res.json(200, {status: err});
@@ -100,16 +100,19 @@ app.post('/publish', function(req, res){
           res.json(200, {res: JSON.parse(body)});
         } 
       });
-
+  var file = fs.createReadStream(item.file);
+  console.log(file);
   var form = r.form();
   form.append('title', item.title);
   form.append('quote', item.quote);
   form.append('type', item.type);
+  form.append('episode', item.episode);
+  form.append('season', item.season);
   form.append('lang', item.lang);
   form.append('context', JSON.stringify(item.context));
   form.append('person', JSON.stringify(item.person));
   form.append('tags', item.tags);
-  form.append('video_file', fs.createReadStream(item.file));
+  form.append('video_file', file);
 });
 
 app.post('/encode', function(req, res){

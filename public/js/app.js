@@ -1,6 +1,7 @@
 var body,
 	player, 
-	file, 
+	file,
+	fileURL, 
 	tmdb, 
 	movie, 
 	conf, 
@@ -77,14 +78,31 @@ function resetTimer(){
 	$('#timer').text(14);
 }
 
+function updateDuration(){
+	if(!curRecord && !curRecord.start) return false;
+	var duration = (player.currentTime() - curRecord.start);
+	if(duration > 14 || duration <= 0){
+		$('#duration').addClass("text-danger").removeClass("text-success");
+	} else {
+		$('#duration').removeClass("text-danger").addClass("text-success");
+	}
+	var fix = duration.toFixed(2);
+	$('#duration').text(fix);
+	return duration;
+}
+
 function startRecord(){
 	console.log("Start recording");
 	curRecord.start = player.currentTime();
+	$('#start_time').text(curRecord.start);
 	$('#recording').show();
-	startTimer();
+	//startTimer();
+	if(player.paused()) player.play();
 }
 
 function endRecord(){
+	if(!curRecord.start) return false;
+	if(updateDuration() > 14) return alert("You cannot end your Cut here, it is longer than 14s...");
 	console.log("End recording");
 	curRecord.end = player.currentTime();
 	stopTimer();
@@ -92,19 +110,19 @@ function endRecord(){
 	console.log(records);
 	$.totalStorage(recordsName, records);
 	curRecord = {
-		title: movie.original_title+" - Cut " + (records.length + 1),
+		title: (movie.original_title || movie.original_name)+" - Cut " + ( records.length + 1 ),
 		start: undefined,
 		end: undefined,
 		status: "draft"
 	};
-	$('#status').css('color', 'green');
-	$('#timer').text("Your cut has been saved !");
+	// $('#status').css('color', 'green');
+	// $('#timer').text("Your cut has been saved !");
 	setTimeout( function(){
 		$('#recording').fadeOut(1000, function(){
-			$('#status').css('color', 'red');
-			$('#timer').text("14");
+			// $('#status').css('color', 'red');
+			// $('#timer').text("14");
 		});
-	}, 5000);
+	}, 300);
 }
 
 function drawRecords(){
@@ -157,6 +175,10 @@ function publishCut(){
 	});
 	newCut.person = records[currIndex].actor;
 	newCut.context = movie;
+	if(episode){
+		newCut.episode = episode.episode;
+		newCut.season = episode.season;	
+	}
 	newCut.type = mediaType;
 	$.post('/publish', newCut, function(r){
 		console.log(r);
@@ -167,7 +189,7 @@ function publishCut(){
 			records[currIndex].remote_id = r.res.id;
 			records[currIndex].status = "published";
 			$('#publish-modal').modal('hide');
-		} else {	
+		} else {
 			console.log("ERROR");
 			alert(r.res.message);
 		}
@@ -182,17 +204,52 @@ function seekBack(){
 	return player.currentTime(then);
 }
 
+function frameForward(){
+	// TODO
+	var now = player.currentTime();
+	var much = 0.2;
+	var then = now + much;
+	return player.currentTime(then);
+}
+
+
+function frameBackward(){
+	// TODO
+	var now = player.currentTime();
+	var much = 0.2;
+	var then = now - much;
+	return player.currentTime(then);
+}
+function oneForward(){
+	// TODO
+	var now = player.currentTime();
+	var much = 0.04;
+	var then = now + much;
+	return player.currentTime(then);
+}
+
+
+function oneBackward(){
+	// TODO
+	var now = player.currentTime();
+	var much = 0.04;
+	var then = now - much;
+	return player.currentTime(then);
+}
+
 function playMovie(id, backdrop, type){
 	Mousetrap.bind("i", startRecord);
 	Mousetrap.bind("o", endRecord);
 	Mousetrap.bind("esc", leaveFullScreen);
-	Mousetrap.bind("ctrl+f", enterFullScreen);
+	Mousetrap.bind(["ctrl+f", "command+f"], enterFullScreen);
 	endpoint = (type == 'movie') ? '/movie/'+id : '/show/'+id;
 	mediaType = type;
-	$('body, #infos').css({"background-image": "url(" + tmdbImg( 'backdrop', 3, backdrop ) + ")"});
+	
 	$("#first-step").fadeOut(300, function(){
 		$.get(endpoint, function(r){
 			movie = r;
+			$('body, #infos').css({"background-image": "url(" + tmdbImg( 'backdrop', 3, r.backdrop_path ) + ")"});
+			console.log(r);
 			recordsName = (type == 'movie') ? 'records_'+r.id : 'records_'+r.id+'_'+episode.season+'_'+episode.episode;
 			records = $.totalStorage(recordsName) || [];
 			// Instanciate blank record ready for use
@@ -203,7 +260,7 @@ function playMovie(id, backdrop, type){
 				status: "draft"
 			};
 			if(type == "tv") curRecord.episode = episode;
-			var fileURL = window.URL.createObjectURL(file);
+			fileURL = window.URL.createObjectURL(file);
 			  $('#video').attr('src', fileURL);
 			  player = videojs('player', {
 			  	controls: true,
@@ -218,6 +275,13 @@ function playMovie(id, backdrop, type){
 			  player.on('play', function(){
 			  		closeInfos();
 			  });
+			  player.on('timeupdate', function(e){
+			  	if(curRecord && curRecord.start) updateDuration();
+			  });
+			  Mousetrap.bind("right", frameForward);
+			  Mousetrap.bind("left", frameBackward);
+			  Mousetrap.bind(["command+right", "ctrl+right"], oneForward);
+			  Mousetrap.bind(["command+left", "ctrl+left"], oneBackward);
 		});
 	});
 }
@@ -344,6 +408,7 @@ function guess(){
 		}
 		html += "</ul>";
 		$('#first-step').append(html);
+		$('#specify').fadeIn();
 	});
 }
 
@@ -528,6 +593,34 @@ function backHome(){
 	return document.location.reload();
 }
 
+function resetPlayer(){
+	var time = player.currentTime();
+	player.dispose();
+	$('#player-wrap').append('<video id="player" class="video-js vjs-default-skin" />');
+	player = videojs('player', {
+		controls: true,
+		autoplay: true
+	}, function(){
+		$('#player-wrap').fadeIn(500);
+		Mousetrap.bind("space", function(){
+			return (player.paused()) ? player.play() : player.pause();
+		});
+		$('#player').find('.vjs-control-bar').addClass('will-hide');
+	}).src(fileURL).ready(function(){
+		console.log("READY !");
+	});
+
+	player.on('play', function(){
+			closeInfos();
+			if(player.seekedAlready) return;
+			setTimeout(function(){
+				console.log("Time :", time);
+				player.currentTime(time);
+				player.seekedAlready = true;
+			}, 1000);
+	});
+}
+
 $(document).ready(function(){
 
 	Mousetrap.bind("ctrl+i", showInspector);
@@ -586,7 +679,15 @@ $(document).ready(function(){
 		var data = $(this).data();
 		playMovie(data.id, data.backdrop, data.type);
 		return false;
-	});	
+	});
+
+	$('#specify').on('submit', function(e){
+		e.preventDefault();
+		var id = $('#tmdb_id').val();
+		var type = $('#manual-type').val();
+		playMovie(id, null, type);
+		return false;
+	});
 
 	$('.seek-back').tooltip();
 	
@@ -657,6 +758,7 @@ $(document).ready(function(){
 	body.on('click', '.seek-back', seekBack);
 	
 	$('#back-home').on('click', backHome);
+	$('#reset-player').on('click', resetPlayer);
 	$('#publish-cut').on('click', publishCut);
 	
 

@@ -25,14 +25,35 @@
         <h3>Choose a file</h3>
         <a href="#" id="choose-file" class="btn btn-lg btn-primary" style="margin-top: 100px;">Browse...</a>
         <input type="file" style="display:none;" id="file">
+        <form id="specify" class="form-horizontal">
+          <div class="row">
+            <div class="col-xs-4">
+              <input type="text" placeholder="Enter tmdb ID here" name="id" id="tmdb_id" class="form-control" style="margin-bottom: 20px;" />
+            </div>
+            <div class="col-xs-4">
+              <select name="type" id="manual-type" class="form-control">
+                <option value="movie">Movie</option>
+                <option value="show">TV Show</option>
+              </select>
+            </div>
+            <div class="col-xs-4">
+              <input type="submit" class="btn btn-primary" value="Ok" style="margin-bottom: 20px;">
+            </div>
+          </div>            
+            
+        </form>
       </div>
       <div id="player-wrap">
         <div id="recording">
-          <i id="status" class="fa fa-circle" style="color:red;"></i> <span id="timer">14</span>
+         <!--  <i id="status" class="fa fa-circle" style="color:red;"></i> <span id="timer">14</span> -->
+         <h6>You are recording</h6>
+         <p><b>Start: </b><span id="start_time">0</span></p>
+         <p><b>Duration: </b><span id="duration">0</span>s</p>
         </div>
         <ul id="nav" class="will-hide">
           <li><a href="#" class="open-infos"><i class="fa fa-bars"></i></a></li>
           <li><a href="#" id="back-home"><i class="fa fa-times"></i></a></li>
+          <li><a href="#" id="reset-player"><i class="fa fa-refresh"></i></a></li>
           <li><a href="#" id="help" title="Press `i` to start recording<br>Press `o` to stop recording"><i class="fa fa-support"></i></a></li>
         </ul>
         <ul id="controls" class="will-hide">
