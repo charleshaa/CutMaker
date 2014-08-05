@@ -188,6 +188,7 @@ function publishCut(){
 			records[currIndex].published = true;
 			records[currIndex].remote_id = r.res.id;
 			records[currIndex].status = "published";
+			records[currIndex].cut_object = newCut;
 			$('#publish-modal').modal('hide');
 		} else {
 			console.log("ERROR");
