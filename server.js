@@ -93,12 +93,12 @@ app.post('/publish', function(req, res){
   var item = req.body,
       r = request.post("http://cultcut-env.elasticbeanstalk.com/api/angular/?method=cutmaker_publish", function(err, response, body){
         if(err){
-          // console.log("Failed: ", err);
-          res.json(200, {status: err});
+          console.log("Failed: ", err);
+          res.json({status: err});
         } else {
           console.log("Success !", body);
-          res.json(200, {res: JSON.parse(body)});
-        } 
+          res.json({res: JSON.parse(body)});
+        }
       });
   var file = fs.createReadStream(item.file);
   console.log(file);
@@ -106,8 +106,10 @@ app.post('/publish', function(req, res){
   form.append('title', item.title);
   form.append('quote', item.quote);
   form.append('type', item.type);
-  form.append('episode', item.episode);
-  form.append('season', item.season);
+  if(item.season != undefined && item.episode != undefined){
+    form.append('episode', item.episode);
+    form.append('season', item.season);
+  }
   form.append('lang', item.lang);
   form.append('context', JSON.stringify(item.context));
   form.append('person', JSON.stringify(item.person));

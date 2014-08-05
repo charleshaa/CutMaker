@@ -544,7 +544,9 @@ function encodeVideo(e){
 	var path = file.path;
 	var stamp = new Date().getTime();
 	var filename = movie.id+"_cut_"+stamp;
+	var light = $(this).parent().parent().parent().find('i.status-light');
 	$(this).css('color', 'yellow');
+	light.removeClass('fa-circle').addClass('fa-spin fa-spinner');
 	$.post('/encode', {source: path, start: records[index].start, end: records[index].end, filename: filename, target: videoPath}, function(res){
 		console.log(res);
 		if(res.status == "success"){
@@ -556,6 +558,7 @@ function encodeVideo(e){
 			$(this).css('color', 'red');
 			alert(res.message);
 		}
+		light.removeClass('fa-spin fa-spinner').addClass('fa-circle');
 	}.bind(this));
 
 }
